@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meganova-mcp-server"
+version = "0.1.0"
+description = "MCP server exposing Nova Mesh agents and skills to Claude Desktop, Cursor, VS Code, and any MCP-compatible client"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "MegaNova AI", email = "dev@meganova.ai" }]
+keywords = ["mcp", "model-context-protocol", "ai-agents", "nova-mesh", "meganova"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "mcp>=1.0,<2",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+nova-mesh = ["nova-mesh[mcp,server]"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+meganova-mcp-server = "meganova_mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meganova_mcp_server"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
