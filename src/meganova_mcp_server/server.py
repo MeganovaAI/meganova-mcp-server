@@ -13,7 +13,6 @@ def create_server() -> FastMCP:
 
     mcp = FastMCP(
         name=config.server_name,
-        version=config.server_version,
     )
 
     # Register tool modules
