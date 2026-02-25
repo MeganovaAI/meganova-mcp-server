@@ -20,10 +20,11 @@ def register(mcp: FastMCP, config: Config) -> None:
         """List all available skill packs in the Nova Mesh catalog."""
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.get(
-                "/api/skills", headers={"Authorization": f"Bearer {config.api_key}"}
+                "/api/skills", headers=config.auth_headers()
             )
             resp.raise_for_status()
-            skills = resp.json()
+            data = resp.json()
+            skills = data.get("skills", data) if isinstance(data, dict) else data
 
         lines = []
         for skill in skills:
@@ -48,7 +49,7 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp = await client.post(
                 f"/api/skills/{skill_name}/execute",
                 json={"tool": tool_name, "arguments": args},
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
                 timeout=120,
             )
             resp.raise_for_status()
@@ -67,10 +68,11 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp = await client.get(
                 "/api/catalog/search",
                 params={"q": query},
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
             )
             resp.raise_for_status()
-            results = resp.json()
+            data = resp.json()
+            results = data.get("results", data) if isinstance(data, dict) else data
 
         lines = []
         for r in results:

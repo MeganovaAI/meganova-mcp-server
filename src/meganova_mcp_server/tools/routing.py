@@ -31,7 +31,7 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp = await client.post(
                 "/api/routing/route",
                 json=payload,
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
                 timeout=120,
             )
             resp.raise_for_status()
@@ -59,7 +59,7 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp = await client.post(
                 "/api/execution/dag",
                 json=dag,
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
                 timeout=300,
             )
             resp.raise_for_status()
@@ -78,10 +78,11 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp = await client.get(
                 "/api/call-log",
                 params={"limit": limit},
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
             )
             resp.raise_for_status()
-            calls = resp.json()
+            data = resp.json()
+            calls = data.get("records", data) if isinstance(data, dict) else data
 
         lines = []
         for call in calls:

@@ -28,8 +28,9 @@ def register(mcp: FastMCP, config: Config) -> None:
 
         lines = []
         for agent in agents:
+            agent_id = agent.get("agent_id", "?")
             caps = ", ".join(agent.get("capabilities", []))
-            lines.append(f"- {agent['name']} ({agent.get('role', 'agent')}): {caps}")
+            lines.append(f"- [{agent_id}] {agent['name']} ({agent.get('agent_type', 'agent')}): {caps}")
         return "\n".join(lines) if lines else "No agents registered."
 
     @mcp.tool()
@@ -62,7 +63,7 @@ def register(mcp: FastMCP, config: Config) -> None:
         """Get detailed information about a specific agent including its skills and configuration.
 
         Args:
-            agent_name: Name of the agent to inspect
+            agent_name: Name of the agent to inspect (use agent_id from list_agents, e.g. "skill_pdf")
         """
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.get(
@@ -74,10 +75,11 @@ def register(mcp: FastMCP, config: Config) -> None:
 
         parts = [
             f"Name: {agent['name']}",
-            f"Role: {agent.get('role', 'agent')}",
-            f"Model: {agent.get('model', 'unknown')}",
+            f"Agent ID: {agent.get('agent_id', 'unknown')}",
+            f"Type: {agent.get('agent_type', 'agent')}",
+            f"Status: {agent.get('status', 'unknown')}",
             f"Capabilities: {', '.join(agent.get('capabilities', []))}",
-            f"Skills: {', '.join(s['name'] for s in agent.get('skills', []))}",
+            f"Loaded Skills: {', '.join(agent.get('loaded_skills', []))}",
         ]
         if agent.get("description"):
             parts.insert(1, f"Description: {agent['description']}")
