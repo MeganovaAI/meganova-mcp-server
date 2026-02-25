@@ -20,15 +20,18 @@ def register(mcp: FastMCP, config: Config) -> None:
         """List all available Nova Mesh agents with their capabilities and loaded skills."""
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.get(
-                "/api/agents", headers={"Authorization": f"Bearer {config.api_key}"}
+                "/api/agents", headers=config.auth_headers()
             )
             resp.raise_for_status()
             agents = resp.json()
 
         lines = []
         for agent in agents:
-            caps = ", ".join(agent.get("capabilities", []))
-            lines.append(f"- {agent['name']} ({agent.get('role', 'agent')}): {caps}")
+            if isinstance(agent, str):
+                lines.append(f"- {agent}")
+            else:
+                caps = ", ".join(agent.get("capabilities", []))
+                lines.append(f"- {agent['name']} ({agent.get('role', 'agent')}): {caps}")
         return "\n".join(lines) if lines else "No agents registered."
 
     @mcp.tool()
@@ -48,7 +51,7 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp = await client.post(
                 "/api/chat",
                 json=payload,
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
                 timeout=120,
             )
             resp.raise_for_status()
@@ -66,7 +69,7 @@ def register(mcp: FastMCP, config: Config) -> None:
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.get(
                 f"/api/agents/{agent_name}",
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
             )
             resp.raise_for_status()
             agent = resp.json()

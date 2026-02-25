@@ -20,22 +20,25 @@ def register(mcp: FastMCP, config: Config) -> None:
         """List all registered Nova Mesh agents with roles and capabilities."""
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.get(
-                "/api/agents", headers={"Authorization": f"Bearer {config.api_key}"}
+                "/api/agents", headers=config.auth_headers()
             )
             resp.raise_for_status()
             agents = resp.json()
 
         lines = []
         for agent in agents:
-            caps = ", ".join(agent.get("capabilities", []))
-            skills = ", ".join(s["name"] for s in agent.get("skills", []))
-            lines.append(
-                f"## {agent['name']}\n"
-                f"- Role: {agent.get('role', 'agent')}\n"
-                f"- Model: {agent.get('model', 'unknown')}\n"
-                f"- Capabilities: {caps}\n"
-                f"- Skills: {skills}"
-            )
+            if isinstance(agent, str):
+                lines.append(f"## {agent}")
+            else:
+                caps = ", ".join(agent.get("capabilities", []))
+                skills = ", ".join(s["name"] for s in agent.get("skills", []))
+                lines.append(
+                    f"## {agent['name']}\n"
+                    f"- Role: {agent.get('role', 'agent')}\n"
+                    f"- Model: {agent.get('model', 'unknown')}\n"
+                    f"- Capabilities: {caps}\n"
+                    f"- Skills: {skills}"
+                )
         return "\n\n".join(lines) if lines else "No agents registered."
 
     @mcp.resource("nova://agents/{agent_name}")
@@ -44,7 +47,7 @@ def register(mcp: FastMCP, config: Config) -> None:
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.get(
                 f"/api/agents/{agent_name}",
-                headers={"Authorization": f"Bearer {config.api_key}"},
+                headers=config.auth_headers(),
             )
             resp.raise_for_status()
             agent = resp.json()
