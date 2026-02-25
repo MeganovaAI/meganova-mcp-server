@@ -36,26 +36,30 @@ def register(mcp: FastMCP, config: Config) -> None:
     async def execute_skill(skill_name: str, tool_name: str, arguments: str = "{}") -> str:
         """Execute a specific tool from a skill pack.
 
+        Routes a prompt describing the skill/tool to execute through the mesh.
+        The mesh selects the appropriate skill agent and runs the task.
+
         Args:
             skill_name: Name of the skill pack (e.g., "web", "pdf", "code")
             tool_name: Name of the tool within the skill pack
             arguments: JSON string of arguments to pass to the tool
         """
-        import json
-
-        args = json.loads(arguments) if arguments else {}
+        prompt = f"Use the {skill_name} skill, tool '{tool_name}' with arguments: {arguments}"
 
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.post(
-                f"/api/skills/{skill_name}/execute",
-                json={"tool": tool_name, "arguments": args},
+                "/api/route/execute",
+                json={"prompt": prompt},
                 headers=config.auth_headers(),
                 timeout=120,
             )
             resp.raise_for_status()
             data = resp.json()
 
-        return data.get("result", str(data))
+        agent_id = data.get("agent_id", "unknown")
+        output = data.get("output", str(data))
+        tokens = data.get("tokens_used", 0)
+        return f"[{agent_id}] ({tokens} tokens)\n{output}"
 
     @mcp.tool()
     async def search_catalog(query: str) -> str:

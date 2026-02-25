@@ -37,26 +37,30 @@ def register(mcp: FastMCP, config: Config) -> None:
     async def chat_with_agent(agent_name: str, message: str, session_id: str = "") -> str:
         """Send a message to a specific Nova Mesh agent and get a response.
 
+        Uses route/execute to send a prompt to the mesh. If agent_name is provided,
+        it will be included as context for routing.
+
         Args:
-            agent_name: Name of the agent to chat with
+            agent_name: Name of the agent to chat with (agent_id from list_agents)
             message: The message to send
             session_id: Optional session ID for conversation continuity
         """
-        payload: dict = {"agent": agent_name, "message": message}
-        if session_id:
-            payload["session_id"] = session_id
+        prompt = f"[target agent: {agent_name}] {message}" if agent_name else message
 
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.post(
-                "/api/chat",
-                json=payload,
+                "/api/route/execute",
+                json={"prompt": prompt},
                 headers=config.auth_headers(),
                 timeout=120,
             )
             resp.raise_for_status()
             data = resp.json()
 
-        return data.get("response", data.get("content", str(data)))
+        agent_id = data.get("agent_id", "unknown")
+        output = data.get("output", str(data))
+        tokens = data.get("tokens_used", 0)
+        return f"[{agent_id}] ({tokens} tokens)\n{output}"
 
     @mcp.tool()
     async def get_agent_info(agent_name: str) -> str:

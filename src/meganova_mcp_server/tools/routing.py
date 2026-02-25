@@ -23,25 +23,30 @@ def register(mcp: FastMCP, config: Config) -> None:
             task: Description of the task to accomplish
             context: Optional additional context for routing decisions
         """
-        payload: dict = {"task": task}
-        if context:
-            payload["context"] = context
+        prompt = f"{task}\n\nContext: {context}" if context else task
 
         async with httpx.AsyncClient(base_url=config.nova_mesh_url) as client:
             resp = await client.post(
-                "/api/routing/route",
-                json=payload,
+                "/api/route",
+                json={"prompt": prompt},
                 headers=config.auth_headers(),
                 timeout=120,
             )
             resp.raise_for_status()
             data = resp.json()
 
-        parts = [f"Routed to: {data.get('agent', 'unknown')}"]
-        if data.get("reasoning"):
-            parts.append(f"Reasoning: {data['reasoning']}")
-        if data.get("response"):
-            parts.append(f"\n{data['response']}")
+        agent_id = data.get("agent_id", "unknown")
+        confidence = data.get("confidence", 0.0)
+        method = data.get("method", "unknown")
+        cb = data.get("circuit_breaker")
+
+        parts = [
+            f"Routed to: {agent_id}",
+            f"Confidence: {confidence:.2f}",
+            f"Method: {method}",
+        ]
+        if cb:
+            parts.append(f"Circuit Breaker: {cb}")
         return "\n".join(parts)
 
     @mcp.tool()
@@ -49,7 +54,9 @@ def register(mcp: FastMCP, config: Config) -> None:
         """Execute a multi-step DAG (directed acyclic graph) plan through the mesh.
 
         Args:
-            plan: JSON string describing the DAG execution plan with steps and dependencies
+            plan: JSON string describing the DAG execution plan. Each task needs:
+                  task_id, agent_id, prompt, and optional dependencies (list of task_ids).
+                  Example: {"tasks": [{"task_id": "t1", "agent_id": "skill_web", "prompt": "search for X"}]}
         """
         import json
 
@@ -65,7 +72,19 @@ def register(mcp: FastMCP, config: Config) -> None:
             resp.raise_for_status()
             data = resp.json()
 
-        return data.get("result", str(data))
+        success = data.get("success", False)
+        tasks = data.get("tasks", [])
+        order = data.get("execution_order", [])
+
+        lines = [f"Success: {success}", f"Execution order: {order}"]
+        for t in tasks:
+            status = t.get("status", "?")
+            error = t.get("error")
+            line = f"- [{t.get('task_id')}] {t.get('name', '?')}: {status}"
+            if error:
+                line += f" (error: {error})"
+            lines.append(line)
+        return "\n".join(lines)
 
     @mcp.tool()
     async def get_call_log(limit: int = 10) -> str:
