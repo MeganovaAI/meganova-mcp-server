@@ -23,15 +23,13 @@ def register(mcp: FastMCP, config: Config) -> None:
                 "/api/agents", headers=config.auth_headers()
             )
             resp.raise_for_status()
-            agents = resp.json()
+            data = resp.json()
+            agents = data.get("agents", data) if isinstance(data, dict) else data
 
         lines = []
         for agent in agents:
-            if isinstance(agent, str):
-                lines.append(f"- {agent}")
-            else:
-                caps = ", ".join(agent.get("capabilities", []))
-                lines.append(f"- {agent['name']} ({agent.get('role', 'agent')}): {caps}")
+            caps = ", ".join(agent.get("capabilities", []))
+            lines.append(f"- {agent['name']} ({agent.get('role', 'agent')}): {caps}")
         return "\n".join(lines) if lines else "No agents registered."
 
     @mcp.tool()
