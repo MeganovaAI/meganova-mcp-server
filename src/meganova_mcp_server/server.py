@@ -13,10 +13,9 @@ def create_server() -> FastMCP:
 
     mcp = FastMCP(
         name=config.server_name,
-        version=config.server_version,
     )
 
-    # Register tool modules
+    # Register tool modules — Nova Mesh
     from meganova_mcp_server.tools.agents import register as register_agents
     from meganova_mcp_server.tools.routing import register as register_routing
     from meganova_mcp_server.tools.skills import register as register_skills
@@ -24,6 +23,17 @@ def create_server() -> FastMCP:
     register_agents(mcp, config)
     register_skills(mcp, config)
     register_routing(mcp, config)
+
+    # Register tool modules — MegaNova API
+    from meganova_mcp_server.tools.inference import register as register_inference
+    from meganova_mcp_server.tools.media import register as register_media
+    from meganova_mcp_server.tools.models import register as register_models
+    from meganova_mcp_server.tools.cloud_agents import register as register_cloud_agents
+
+    register_inference(mcp, config)
+    register_media(mcp, config)
+    register_models(mcp, config)
+    register_cloud_agents(mcp, config)
 
     # Register resource modules
     from meganova_mcp_server.resources.agents import register as register_agent_resources

@@ -20,11 +20,21 @@ class Config:
     )
     api_key: str = field(default_factory=lambda: os.getenv("MEGANOVA_API_KEY", ""))
 
+    # MegaNova API (inference, images, embeddings, etc.)
+    api_url: str = field(
+        default_factory=lambda: os.getenv("MEGANOVA_API_URL", "https://api.meganova.ai/v1")
+    )
+
+    # Studio API (cloud agents)
+    studio_api_url: str = field(
+        default_factory=lambda: os.getenv("MEGANOVA_STUDIO_URL", "https://studio-api.meganova.ai")
+    )
+
     # Server identity
     server_name: str = field(
-        default_factory=lambda: os.getenv("MCP_SERVER_NAME", "meganova-mesh")
+        default_factory=lambda: os.getenv("MCP_SERVER_NAME", "meganova")
     )
-    server_version: str = "0.1.0"
+    server_version: str = "0.2.0"
 
     # Transport
     transport: str = field(default_factory=lambda: os.getenv("MCP_TRANSPORT", "stdio"))
