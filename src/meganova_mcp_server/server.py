@@ -19,10 +19,12 @@ def create_server() -> FastMCP:
     from meganova_mcp_server.tools.agents import register as register_agents
     from meganova_mcp_server.tools.routing import register as register_routing
     from meganova_mcp_server.tools.skills import register as register_skills
+    from meganova_mcp_server.tools.observability import register as register_observability
 
     register_agents(mcp, config)
-    register_skills(mcp, config)
     register_routing(mcp, config)
+    register_skills(mcp, config)
+    register_observability(mcp, config)
 
     # Register tool modules — MegaNova API
     from meganova_mcp_server.tools.inference import register as register_inference
