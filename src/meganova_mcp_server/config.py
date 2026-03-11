@@ -34,7 +34,7 @@ class Config:
     server_name: str = field(
         default_factory=lambda: os.getenv("MCP_SERVER_NAME", "meganova")
     )
-    server_version: str = "0.2.0"
+    server_version: str = "0.3.0"
 
     # Transport
     transport: str = field(default_factory=lambda: os.getenv("MCP_TRANSPORT", "stdio"))
